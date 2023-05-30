@@ -1,6 +1,7 @@
 package com.example.messageservice.handler;
 
 import com.example.messageservice.domain.Message;
+import com.example.messageservice.mapper.MessageMapper;
 import com.example.messageservice.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MessageHandler {
     private final MessageRepository messageRepository;
+    private final MessageMapper mapper;
 
     Sinks.Many<Message> messagesSink = Sinks.many().replay().latest();
 
@@ -33,6 +35,7 @@ public class MessageHandler {
                     return message;
                 })
                 .flatMap(messageRepository::save)
+                .map(mapper::entityToDto)
 //                .doOnNext(message -> messagesSink.tryEmitNext(message))
                 .flatMap(savedMessage -> ServerResponse.status(HttpStatus.CREATED)
                         .bodyValue(savedMessage));
